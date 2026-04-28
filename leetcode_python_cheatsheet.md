@@ -1,77 +1,42 @@
 # LeetCode Python Cheat Sheet
 
-This cheat sheet is for interview prep through pattern recognition, not memorizing isolated solutions. The goal is to look at a problem, classify its structure, and reach a small set of likely tools quickly.
-
-Use this as a review document:
-
-- identify the pattern
-- recall the core invariant
-- drop in a clean template
-- adapt for edge cases
+This sheet is for pattern recognition, not memorizing problem numbers. The goal is to look at a problem, classify it fast, and drop in a clean Python template you can explain in an interview.
 
 ## Pattern Selection Flowchart
 
-```mermaid
-flowchart TD
-    A[Start with problem shape] --> B[Sorted array]
-    A --> C[Subarray or substring]
-    A --> D[Tree]
-    A --> E[Graph or grid]
-    A --> F[Linked list]
-    A --> G[All permutations / subsets / combinations]
-    A --> H[Top K / least K]
-    A --> I[Max / min / count over choices]
-    A --> J[Prefix / common string search]
-    A --> K[In-place array transformation]
+Read this top to bottom like a quick flowchart.
 
-    B --> B1[Binary Search]
-    B --> B2[Two Pointers]
+| If you see this | Try this first | Quick cue |
+|---|---|---|
+| Sorted array | Binary Search, Two Pointers | Search a boundary or shrink from both ends |
+| All permutations / subsets / combinations | Backtracking | Try a choice, recurse, undo |
+| Tree | DFS, BFS | DFS for subtree/path logic, BFS for levels |
+| Graph or grid | DFS, BFS, Dijkstra, Topological Sort, Union Find | Traverse, shortest path, dependencies, or connectivity |
+| Linked list | Dummy Node, Fast/Slow Pointers, Reversal | Pointer wiring is the whole problem |
+| Recursion is banned | Stack | Simulate DFS or nested processing iteratively |
+| Must solve in-place | Two Pointers, Swap-to-Index, Reverse Sections, Encode State In-Place | Reuse the array instead of extra memory |
+| Maximum / minimum over many choices | DP, Greedy, Sliding Window, Binary Search on Answer | Optimize over states, choices, or feasible answers |
+| Top / least K items | Heap, QuickSelect, Bucket Sort | Repeated best item vs one-shot kth |
+| Common string / prefix search | HashMap, Trie | Exact lookup vs prefix lookup |
+| Subarray / substring | Sliding Window, Prefix Sum + HashMap | Local valid window vs exact cumulative total |
+| Else | HashMap / Set, then Sorting | Fast lookup or reveal order |
 
-    C --> C1[Sliding Window]
-    C --> C2[Prefix Sum + HashMap]
+## Default Fallbacks
 
-    D --> D1[DFS]
-    D --> D2[BFS]
-
-    E --> E1[DFS]
-    E --> E2[BFS]
-    E --> E3[Dijkstra]
-    E --> E4[Topological Sort]
-    E --> E5[Union Find]
-
-    F --> F1[Dummy Node]
-    F --> F2[Fast / Slow Pointers]
-    F --> F3[Pointer Reversal]
-
-    G --> G1[Backtracking]
-
-    H --> H1[Heap]
-    H --> H2[QuickSelect]
-    H --> H3[Bucket Sort]
-
-    I --> I1[Dynamic Programming]
-    I --> I2[Greedy]
-    I --> I3[Sliding Window]
-    I --> I4[Binary Search on Answer]
-
-    J --> J1[HashMap]
-    J --> J2[Trie]
-
-    K --> K1[Two Pointers]
-    K --> K2[Swap to Index]
-    K --> K3[Reverse Sections]
-```
+- `HashMap / Set`: good when you want `O(1)` average lookup, counting, grouping, or deduplication.
+- `Sorting`: good when you want order, adjacency, intervals, or two pointers.
+- Interview note: sorting is a standard fallback, but Python `list.sort()` is not strictly `O(1)` extra space.
 
 ## HashMap / Set
 
 **Recognition**
 
-- Need fast membership, counting, frequency matching, grouping, or deduplication
-- Problem says "first unique", "two sum", "anagram", "seen before", or "count occurrences"
+- Need fast lookup, counting, grouping, or deduplication.
+- Words like "seen", "frequency", "pair", "duplicate", or "same pattern" appear.
 
 **Core Idea**
 
-Use a hash-based structure to trade memory for `O(1)` average lookup and update.
+Trade memory for speed. Store what you need to ask repeatedly: "Have I seen this?", "How many times?", or "What shares this key?"
 
 **Python Template**
 
@@ -79,50 +44,43 @@ Use a hash-based structure to trade memory for `O(1)` average lookup and update.
 from collections import defaultdict
 
 def solve(nums):
-    count = defaultdict(int)
+    freq = defaultdict(int)
     seen = set()
 
     for x in nums:
-        count[x] += 1
+        freq[x] += 1
+        if x in seen:
+            pass
         seen.add(x)
 
-    for x in nums:
-        if count[x] == 1:
-            return x
-    return -1
+    return freq, seen
 ```
 
-**Common LeetCode Problems**
+**Typical Complexity**
 
-- Two Sum
-- Group Anagrams
-- Contains Duplicate
-- Valid Anagram
-- Longest Consecutive Sequence
-- Subarray Sum Equals K
+- Time: `O(n)`
+- Space: `O(n)`
 
 **Common Mistakes**
 
-- Using list lookup instead of set lookup
-- Forgetting that dictionary keys must be hashable
-- Overcounting when you only need membership
+- Using a list for membership checks.
+- Counting when a set is enough.
+- Forgetting keys must be hashable.
 
 **One-Line Memory Rule**
 
-If the problem needs fast lookup, counting, or grouping, start with `dict` or `set`.
+If the same lookup happens again and again, store it in a `dict` or `set`.
 
 ## Two Pointers
 
 **Recognition**
 
-- Sorted array
-- Palindrome checks
-- Opposite-end shrinking
-- In-place compaction or partitioning
+- Sorted array, palindrome, pair sum, partition, or in-place compaction.
+- You can move one boundary based on what the other boundary sees.
 
 **Core Idea**
 
-Move two indices under a clear invariant instead of rechecking every pair.
+Use two indices instead of nested loops. Each move should eliminate impossible answers.
 
 **Python Template**
 
@@ -131,10 +89,10 @@ def two_sum_sorted(nums, target):
     left, right = 0, len(nums) - 1
 
     while left < right:
-        s = nums[left] + nums[right]
-        if s == target:
+        total = nums[left] + nums[right]
+        if total == target:
             return [left, right]
-        if s < target:
+        if total < target:
             left += 1
         else:
             right -= 1
@@ -142,36 +100,31 @@ def two_sum_sorted(nums, target):
     return [-1, -1]
 ```
 
-**Common LeetCode Problems**
+**Typical Complexity**
 
-- Two Sum II
-- Valid Palindrome
-- 3Sum
-- Container With Most Water
-- Remove Duplicates from Sorted Array
-- Trapping Rain Water
+- Time: `O(n)`
+- Space: `O(1)`
 
 **Common Mistakes**
 
-- Using two pointers on unsorted data without justification
-- Moving both pointers when only one should move
-- Forgetting duplicate skipping in `3Sum`
+- Using it on unsorted data without first sorting or justifying order.
+- Moving both pointers when only one should move.
+- Forgetting duplicate skipping in problems like `3Sum`.
 
 **One-Line Memory Rule**
 
-If order matters and you can shrink from ends or scan in sync, think two pointers.
+If order lets you discard one side at a time, use two pointers.
 
 ## Sliding Window
 
 **Recognition**
 
-- Subarray or substring
-- Need longest, shortest, or count under a local constraint
-- Window grows and shrinks while maintaining a condition
+- Subarray or substring with a local validity rule.
+- Need longest, shortest, or count of a valid contiguous range.
 
 **Core Idea**
 
-Maintain a valid window `[left, right]` and update it incrementally instead of recomputing from scratch.
+Grow the right end, shrink the left end, and keep the window state updated incrementally.
 
 **Python Template**
 
@@ -195,36 +148,31 @@ def length_of_longest_substring(s):
     return best
 ```
 
-**Common LeetCode Problems**
+**Typical Complexity**
 
-- Longest Substring Without Repeating Characters
-- Minimum Window Substring
-- Permutation in String
-- Longest Repeating Character Replacement
-- Find All Anagrams in a String
+- Time: `O(n)`
+- Space: `O(k)` for window state
 
 **Common Mistakes**
 
-- Forgetting whether the window condition should be valid or invalid inside the `while`
-- Using sliding window when negatives break monotonic behavior
-- Updating the answer before restoring validity
+- Using sliding window for exact-sum problems with negative numbers.
+- Updating the answer before the window is valid again.
+- Not writing down what "valid" means.
 
 **One-Line Memory Rule**
 
-For substring or subarray constraints that can be updated one step at a time, use a window.
+Window problems are about maintaining validity, not recomputing it.
 
 ## Prefix Sum + HashMap
 
 **Recognition**
 
-- Need count or existence of subarrays with exact sum
-- Range sum queries
-- Prefix difference trick
-- Works especially well when negatives appear
+- Exact subarray sum, count of subarrays, or range-total queries.
+- Negative numbers exist, so shrinking a window is not reliable.
 
 **Core Idea**
 
-If `prefix[j] - prefix[i] = target`, then earlier prefix values can be stored in a map.
+Turn a subarray condition into a difference between two prefix sums, then count earlier prefixes with a map.
 
 **Python Template**
 
@@ -245,41 +193,36 @@ def subarray_sum(nums, k):
     return ans
 ```
 
-**Common LeetCode Problems**
+**Typical Complexity**
 
-- Subarray Sum Equals K
-- Continuous Subarray Sum
-- Path Sum III
-- Contiguous Array
-- Range Sum Query
+- Time: `O(n)`
+- Space: `O(n)`
 
 **Common Mistakes**
 
-- Forgetting `freq[0] = 1`
-- Using sliding window when negative numbers are present
-- Mixing exact-sum logic with at-most logic
+- Forgetting `freq[0] = 1`.
+- Using sliding window when negatives break monotonic behavior.
+- Mixing "exactly k" with "at most k".
 
 **One-Line Memory Rule**
 
-Exact subarray sum often becomes prefix sum difference plus a hashmap.
+Exact subarray total usually becomes prefix difference plus hashmap.
 
 ## Stack
 
 **Recognition**
 
-- Need matching pairs
-- Need undo of recent state
-- Recursive structure can be simulated iteratively
-- Problem asks for nested parsing or expression evaluation
+- Nested structure, matching pairs, undo-last, or iterative DFS.
+- Recursion is banned but the recursive idea still fits.
 
 **Core Idea**
 
-Use LIFO order when the most recent unresolved item should be handled first.
+Use LIFO order when the most recent unfinished work must be handled first.
 
 **Python Template**
 
 ```python
-def is_valid(s):
+def is_valid_parentheses(s):
     pairs = {')': '(', ']': '[', '}': '{'}
     stack = []
 
@@ -294,41 +237,38 @@ def is_valid(s):
     return not stack
 ```
 
-**Common LeetCode Problems**
+**Typical Complexity**
 
-- Valid Parentheses
-- Evaluate Reverse Polish Notation
-- Decode String
-- Simplify Path
+- Time: `O(n)`
+- Space: `O(n)`
 
 **Common Mistakes**
 
-- Forgetting empty-stack checks
-- Using stack when simple counting is enough
-- Popping too early when nested state matters
+- Forgetting empty-stack checks.
+- Using stack when a counter would be enough.
+- Not realizing iterative DFS is just "recursion with your own stack".
 
 **One-Line Memory Rule**
 
-If the last unresolved thing must be handled first, use a stack.
+If the last unfinished thing should be solved first, use a stack.
 
 ## Monotonic Stack
 
 **Recognition**
 
-- Next greater, next smaller, previous greater, previous smaller
-- Histogram or span problems
-- Want nearest boundary with monotonic relation
+- Next greater/smaller, previous greater/smaller, span, or histogram boundaries.
+- You need the nearest item with a monotonic relationship.
 
 **Core Idea**
 
-Maintain a stack that stays increasing or decreasing so each element is pushed and popped at most once.
+Keep the stack increasing or decreasing so each element is pushed once and popped once.
 
 **Python Template**
 
 ```python
 def next_greater_elements(nums):
     res = [-1] * len(nums)
-    stack = []  # stores indices, values decreasing
+    stack = []  # indices; values are decreasing on the stack
 
     for i, x in enumerate(nums):
         while stack and nums[stack[-1]] < x:
@@ -338,34 +278,31 @@ def next_greater_elements(nums):
     return res
 ```
 
-**Common LeetCode Problems**
+**Typical Complexity**
 
-- Daily Temperatures
-- Next Greater Element I / II
-- Largest Rectangle in Histogram
-- Trapping Rain Water
+- Time: `O(n)`
+- Space: `O(n)`
 
 **Common Mistakes**
 
-- Storing values when indices are actually needed
-- Choosing wrong monotonic direction
-- Forgetting sentinel handling in histogram problems
+- Choosing the wrong monotonic direction.
+- Storing values when indices are needed.
+- Forgetting sentinel logic in histogram-style problems.
 
 **One-Line Memory Rule**
 
-Nearest greater or smaller element usually means monotonic stack.
+Nearest greater or smaller usually means monotonic stack.
 
 ## Binary Search
 
 **Recognition**
 
-- Sorted search space
-- Need first true, last true, minimum feasible, maximum feasible
-- Answer itself can be searched by feasibility
+- Sorted input, sorted answer space, or first/last valid boundary.
+- The condition is monotonic: once true, it stays true.
 
 **Core Idea**
 
-Exploit monotonicity: if a condition becomes true, it stays true.
+Search the boundary where the answer changes from impossible to possible.
 
 **Python Template**
 
@@ -380,36 +317,31 @@ def first_true(lo, hi, check):
     return lo
 ```
 
-**Common LeetCode Problems**
+**Typical Complexity**
 
-- Binary Search
-- Search Insert Position
-- Search in Rotated Sorted Array
-- Find Minimum in Rotated Sorted Array
-- Koko Eating Bananas
-- Capacity To Ship Packages Within D Days
+- Time: `O(log n)` for direct search, or `O(log range * check_cost)` on answers
+- Space: `O(1)`
 
 **Common Mistakes**
 
-- No clear monotonic predicate
-- Infinite loop from wrong boundary updates
-- Confusing index search with answer search
+- No monotonic condition.
+- Infinite loops from wrong boundary updates.
+- Confusing "searching an index" with "searching an answer".
 
 **One-Line Memory Rule**
 
-If the search space is monotonic, binary search the boundary.
+Binary search is about a monotonic boundary, not just sorted arrays.
 
 ## Intervals
 
 **Recognition**
 
-- Start-end ranges
-- Merge, overlap, meeting rooms, insert interval
-- Need event ordering on segments
+- Start/end ranges, overlap checks, scheduling, or merge decisions.
+- The order of endpoints is more important than the original order.
 
 **Core Idea**
 
-Sort by start time, then sweep and merge or count overlaps.
+Sort first, then sweep once while merging or counting overlaps.
 
 **Python Template**
 
@@ -427,36 +359,31 @@ def merge(intervals):
     return merged
 ```
 
-**Common LeetCode Problems**
+**Typical Complexity**
 
-- Merge Intervals
-- Insert Interval
-- Non-overlapping Intervals
-- Meeting Rooms
-- Meeting Rooms II
+- Time: `O(n log n)`
+- Space: `O(n)` for output
 
 **Common Mistakes**
 
-- Forgetting to sort first
-- Using `<=` vs `<` incorrectly for touching intervals
-- Mutating intervals without understanding ownership
+- Forgetting to sort first.
+- Getting the overlap condition wrong for touching intervals.
+- Solving an interval problem with nested loops before trying sorting.
 
 **One-Line Memory Rule**
 
-Intervals usually start with sort, then sweep.
+Intervals usually mean sort, then sweep.
 
 ## Heap / Priority Queue
 
 **Recognition**
 
-- Repeated access to smallest or largest item
-- Top K with streaming updates
-- Merge sorted lists
-- Best-first exploration
+- Need repeated access to the current smallest/largest item.
+- Need top `k`, least `k`, k-way merge, or best-first expansion.
 
 **Core Idea**
 
-A heap gives `O(log n)` insert and pop of the smallest item. Use negatives for max-heap behavior.
+A heap keeps the next best candidate cheap to insert and cheap to remove.
 
 **Python Template**
 
@@ -477,35 +404,31 @@ def top_k_frequent(nums, k):
     return [num for count, num in heap]
 ```
 
-**Common LeetCode Problems**
+**Typical Complexity**
 
-- Kth Largest Element in an Array
-- Top K Frequent Elements
-- Merge K Sorted Lists
-- Find Median from Data Stream
-- Task Scheduler
+- Time: `O(n log k)` for top-`k`
+- Space: `O(n)` for counts, `O(k)` for the heap
 
 **Common Mistakes**
 
-- Forgetting Python `heapq` is a min-heap
-- Using heap when one final selection would be cheaper with quickselect
-- Pushing full objects when a smaller tuple would do
+- Forgetting Python `heapq` is a min-heap.
+- Using a heap when you only need one kth answer once.
+- Missing bucket sort as an option when frequencies are bounded.
 
 **One-Line Memory Rule**
 
-If you need repeated best-item extraction, use a heap.
+If you keep asking "what is the best item right now?", use a heap.
 
 ## QuickSelect
 
 **Recognition**
 
-- Need kth largest or kth smallest once
-- Do not need full sorting
-- Average-case performance is acceptable
+- Need one kth smallest/largest answer from static data.
+- Full sorting feels wasteful.
 
 **Core Idea**
 
-Partition like quicksort, but recurse only into the side containing the target index.
+Partition like quicksort, but only recurse into the side containing the target index.
 
 **Python Template**
 
@@ -532,6 +455,7 @@ def find_kth_largest(nums, k):
     while left <= right:
         pivot_index = random.randint(left, right)
         pivot_index = partition(left, right, pivot_index)
+
         if pivot_index == target:
             return nums[pivot_index]
         if pivot_index < target:
@@ -540,32 +464,74 @@ def find_kth_largest(nums, k):
             right = pivot_index - 1
 ```
 
-**Common LeetCode Problems**
+**Typical Complexity**
 
-- Kth Largest Element in an Array
-- Top K Frequent Elements
+- Average Time: `O(n)`
+- Worst Time: `O(n^2)`
+- Space: `O(1)` extra
 
 **Common Mistakes**
 
-- Forgetting kth largest vs kth smallest index conversion
-- Worst-case behavior if pivot choice is poor
-- Using quickselect when stable order is needed
+- Forgetting kth-largest vs kth-smallest index conversion.
+- Using it when you need stable ordering or repeated queries.
+- Ignoring worst-case behavior in explanation.
 
 **One-Line Memory Rule**
 
-One kth-element query without full sorting often means quickselect.
+One kth-element query often means quickselect, not heap.
+
+## In-Place Array Tricks
+
+**Recognition**
+
+- Must use `O(1)` extra space on an array.
+- Values can be swapped to their "home" index or used to encode state.
+
+**Core Idea**
+
+Reuse the input array itself: place values where they belong, reverse sections, or encode extra information in signs or offsets.
+
+**Python Template**
+
+```python
+def cyclic_sort(nums):
+    i = 0
+
+    while i < len(nums):
+        j = nums[i] - 1
+        if 1 <= nums[i] <= len(nums) and nums[i] != nums[j]:
+            nums[i], nums[j] = nums[j], nums[i]
+        else:
+            i += 1
+
+    return nums
+```
+
+**Typical Complexity**
+
+- Time: `O(n)`
+- Space: `O(1)`
+
+**Common Mistakes**
+
+- Infinite swap loops from bad guard conditions.
+- Forgetting values may be out of range.
+- Overwriting information you still need later.
+
+**One-Line Memory Rule**
+
+In-place array problems often mean "put each value where it belongs."
 
 ## Linked List
 
 **Recognition**
 
-- Need node rewiring
-- Remove nth, reverse, merge, detect cycle, reorder
-- Dummy head or fast/slow pointers are natural
+- Pointer wiring is the hard part.
+- Head deletion, cycle detection, middle finding, or reversal appears.
 
 **Core Idea**
 
-Pointer problems become easier with a dummy node, slow/fast runners, or local reversal blocks.
+Simplify edge cases with a dummy node, fast/slow pointers, or iterative reversal.
 
 **Python Template**
 
@@ -588,35 +554,31 @@ def reverse_list(head):
     return prev
 ```
 
-**Common LeetCode Problems**
+**Typical Complexity**
 
-- Reverse Linked List
-- Merge Two Sorted Lists
-- Linked List Cycle
-- Remove Nth Node From End of List
-- Reorder List
-- Reverse Nodes in k-Group
+- Time: `O(n)`
+- Space: `O(1)`
 
 **Common Mistakes**
 
-- Losing `next` before rewiring
-- Forgetting dummy node for head deletion cases
-- Using values instead of node references when identity matters
+- Losing `next` before rewiring.
+- Forgetting a dummy node when the head may change.
+- Comparing values when node identity matters.
 
 **One-Line Memory Rule**
 
-Linked list bugs usually disappear with a dummy node and careful pointer saves.
+Most linked list bugs disappear if you save `next` and use a dummy head.
 
 ## Tree DFS / BFS
 
 **Recognition**
 
-- Binary tree traversal
-- Need depth, path, subtree info, level-order traversal, or serialization
+- The input is a tree and each child subtree matters.
+- You need depth, path info, levels, or subtree-combined answers.
 
 **Core Idea**
 
-DFS is natural for subtree return values. BFS is natural for level-by-level processing and shortest unweighted tree distance.
+Use DFS when each node needs information from children. Use BFS when you care about levels or shortest unweighted distance.
 
 **Python Template**
 
@@ -655,36 +617,31 @@ def level_order(root):
     return ans
 ```
 
-**Common LeetCode Problems**
+**Typical Complexity**
 
-- Maximum Depth of Binary Tree
-- Binary Tree Level Order Traversal
-- Diameter of Binary Tree
-- Lowest Common Ancestor of a Binary Tree
-- Path Sum
-- Binary Tree Right Side View
+- Time: `O(n)`
+- Space: `O(h)` recursion for DFS, `O(w)` queue for BFS
 
 **Common Mistakes**
 
-- Mixing subtree return value with global answer logic
-- Forgetting base cases
-- Using BFS when recursive subtree composition is simpler
+- Mixing "what the subtree returns" with "what the final answer stores".
+- Forgetting base cases.
+- Using BFS when a subtree recurrence is simpler.
 
 **One-Line Memory Rule**
 
-Trees split naturally into subtrees, so start with DFS unless levels matter.
+DFS solves subtree logic; BFS solves level logic.
 
 ## Graph / Grid DFS/BFS
 
 **Recognition**
 
-- Islands, regions, rooms, components, reachability
-- Grid neighbors or graph adjacency list
-- Unweighted shortest path suggests BFS
+- Need traversal, component counting, reachability, or unweighted shortest path.
+- The state is a cell, node, or coordinate with neighbors.
 
 **Core Idea**
 
-Model states as nodes and legal moves as edges; traverse with DFS for exploration or BFS for shortest unweighted steps.
+Model states as nodes and legal moves as edges. Use DFS for full exploration and BFS for shortest unweighted steps.
 
 **Python Template**
 
@@ -718,35 +675,31 @@ def num_islands(grid):
     return islands
 ```
 
-**Common LeetCode Problems**
+**Typical Complexity**
 
-- Number of Islands
-- Flood Fill
-- Rotting Oranges
-- Clone Graph
-- Walls and Gates
-- Pacific Atlantic Water Flow
+- Time: `O(V + E)` or `O(rows * cols)` on a grid
+- Space: `O(V)` for visited plus queue/stack
 
 **Common Mistakes**
 
-- Marking visited too late and adding duplicates
-- Using DFS recursion when depth may overflow
-- Forgetting graph can be disconnected
+- Marking visited too late and enqueueing duplicates.
+- Using DFS recursion when depth may overflow.
+- Forgetting disconnected components.
 
 **One-Line Memory Rule**
 
-Grid or graph traversal starts with nodes, neighbors, visited, and a clear stop rule.
+Graph/grid problems start with nodes, neighbors, and visited.
 
 ## Topological Sort
 
 **Recognition**
 
-- Directed acyclic dependency order
-- "Can finish", "build order", "alien dictionary", "course schedule"
+- Directed dependencies: course order, build order, prerequisite order.
+- Need an ordering that respects edges.
 
 **Core Idea**
 
-Nodes with indegree zero are available now; process them and reduce dependency counts.
+Nodes with indegree `0` are available now. Remove them layer by layer.
 
 **Python Template**
 
@@ -775,34 +728,31 @@ def topo_sort(num_nodes, edges):
     return order if len(order) == num_nodes else []
 ```
 
-**Common LeetCode Problems**
+**Typical Complexity**
 
-- Course Schedule
-- Course Schedule II
-- Alien Dictionary
-- Minimum Height Trees
+- Time: `O(V + E)`
+- Space: `O(V + E)`
 
 **Common Mistakes**
 
-- Applying topo sort to undirected graphs
-- Forgetting cycle detection by result length
-- Reversing edge direction accidentally
+- Using it on undirected graphs.
+- Reversing edge direction accidentally.
+- Forgetting that a short result means there was a cycle.
 
 **One-Line Memory Rule**
 
-Dependency order in a DAG usually means indegree queue.
+Dependencies in a DAG usually mean indegree queue.
 
 ## Dijkstra
 
 **Recognition**
 
-- Weighted shortest path with non-negative weights
-- Grid with movement costs
-- "Minimum effort", "minimum time", "network delay"
+- Weighted shortest path with non-negative edge costs.
+- You want the cheapest path, not just any path.
 
 **Core Idea**
 
-Always expand the currently cheapest reachable state first using a min-heap.
+Always expand the currently cheapest reachable state first with a min-heap.
 
 **Python Template**
 
@@ -824,8 +774,8 @@ def dijkstra(n, edges, start):
         if curr_dist > dist[node]:
             continue
 
-        for nei, w in graph[node]:
-            new_dist = curr_dist + w
+        for nei, weight in graph[node]:
+            new_dist = curr_dist + weight
             if new_dist < dist[nei]:
                 dist[nei] = new_dist
                 heapq.heappush(heap, (new_dist, nei))
@@ -833,18 +783,16 @@ def dijkstra(n, edges, start):
     return dist
 ```
 
-**Common LeetCode Problems**
+**Typical Complexity**
 
-- Network Delay Time
-- Path With Minimum Effort
-- Cheapest Flights Within K Stops
-- Swim in Rising Water
+- Time: `O((V + E) log V)`
+- Space: `O(V + E)`
 
 **Common Mistakes**
 
-- Using BFS on weighted edges
-- Forgetting stale heap entry checks
-- Applying Dijkstra with negative weights
+- Using BFS on weighted edges.
+- Forgetting stale heap entry checks.
+- Using Dijkstra when negative weights exist.
 
 **One-Line Memory Rule**
 
@@ -854,14 +802,12 @@ Non-negative weighted shortest path means Dijkstra.
 
 **Recognition**
 
-- Connectivity under repeated unions
-- Dynamic component merging
-- Cycle detection in undirected graph
-- Similarity grouping
+- Repeated connectivity checks with merges.
+- Components change over time and you only care who is connected.
 
 **Core Idea**
 
-Track component representatives with path compression and union by rank or size.
+Store a representative for each component, compress paths during finds, and merge by rank or size.
 
 **Python Template**
 
@@ -890,19 +836,16 @@ def union(a, b):
     return True
 ```
 
-**Common LeetCode Problems**
+**Typical Complexity**
 
-- Number of Connected Components in an Undirected Graph
-- Redundant Connection
-- Accounts Merge
-- Number of Islands II
-- Graph Valid Tree
+- Time: near `O(1)` amortized per operation, more precisely `O(alpha(n))`
+- Space: `O(n)`
 
 **Common Mistakes**
 
-- Forgetting path compression
-- Rebuilding connectivity from scratch every time
-- Using union find when directed ordering is actually required
+- Forgetting path compression.
+- Recomputing connectivity from scratch every time.
+- Using union find when you really need directed order instead of connectivity.
 
 **One-Line Memory Rule**
 
@@ -912,12 +855,12 @@ Repeated merge-and-query connectivity suggests union find.
 
 **Recognition**
 
-- All permutations, subsets, combinations, partitions
-- Need to generate all valid choices under constraints
+- Need all subsets, permutations, combinations, or valid constructions.
+- The answer is built one choice at a time.
 
 **Core Idea**
 
-Build a partial path, recurse on choices, then undo the choice.
+Choose, recurse, undo. The recursion tree is the search space.
 
 **Python Template**
 
@@ -941,36 +884,31 @@ def subsets(nums):
     return ans
 ```
 
-**Common LeetCode Problems**
+**Typical Complexity**
 
-- Subsets
-- Permutations
-- Combination Sum
-- Palindrome Partitioning
-- N-Queens
-- Word Search
+- Time: often exponential, commonly `O(2^n)` or `O(n!)`
+- Space: recursion depth plus output
 
 **Common Mistakes**
 
-- Forgetting to copy the path
-- Forgetting to undo the state
-- Missing pruning when constraints allow it
+- Forgetting to copy the current path.
+- Forgetting to undo the last choice.
+- Missing pruning opportunities.
 
 **One-Line Memory Rule**
 
-Generate-all-choice problems usually mean choose, recurse, unchoose.
+Backtracking is choose, recurse, unchoose.
 
 ## Dynamic Programming
 
 **Recognition**
 
-- Best answer over many choices
-- Overlapping subproblems
-- State can be defined by index, capacity, position, or mask
+- Best answer over many choices with repeated subproblems.
+- A brute-force recursion would recompute the same state again and again.
 
 **Core Idea**
 
-Define state, transition, base case, and evaluation order. Memoization and tabulation are the same recurrence in different form.
+Define a state, define a transition, set the base case, then compute each state once.
 
 **Python Template**
 
@@ -987,36 +925,31 @@ def coin_change(coins, amount):
     return dp[amount] if dp[amount] != amount + 1 else -1
 ```
 
-**Common LeetCode Problems**
+**Typical Complexity**
 
-- Climbing Stairs
-- House Robber
-- Coin Change
-- Longest Increasing Subsequence
-- Partition Equal Subset Sum
-- Edit Distance
+- Time: number of states times transitions
+- Space: number of stored states
 
 **Common Mistakes**
 
-- State definition is vague
-- Wrong iteration order in 1D compression
-- Forgetting whether transition depends on current row or previous row
+- State definition is unclear.
+- Wrong iteration order when compressing to 1D.
+- Writing code before the recurrence is clear.
 
 **One-Line Memory Rule**
 
-If brute force repeats the same subproblems, formalize state and transition.
+DP is just cached recursion with a clean state definition.
 
 ## Greedy
 
 **Recognition**
 
-- Local best choice seems permanently safe
-- Interval scheduling, jumps, merges, resource allocation
-- Can prove staying ahead or exchange argument
+- A local choice looks safe and never needs to be undone.
+- You can argue "stays ahead" or "exchange" informally.
 
 **Core Idea**
 
-Make the best immediate choice only when you can justify that it never blocks the optimal answer.
+Make the best immediate move only if you can justify that it cannot block the global optimum.
 
 **Python Template**
 
@@ -1032,35 +965,31 @@ def can_jump(nums):
     return True
 ```
 
-**Common LeetCode Problems**
+**Typical Complexity**
 
-- Jump Game
-- Gas Station
-- Merge Triplets
-- Non-overlapping Intervals
-- Partition Labels
+- Time: often `O(n)` after sorting if needed
+- Space: often `O(1)`
 
 **Common Mistakes**
 
-- Choosing greedy without proof intuition
-- Confusing greedy with DP on the same surface pattern
-- Ignoring counterexamples with small test cases
+- Calling something greedy without proof intuition.
+- Ignoring a small counterexample.
+- Using greedy when DP is needed to compare multiple futures.
 
 **One-Line Memory Rule**
 
-Greedy works when a local choice can be proved globally safe.
+Greedy works only when the local best move is globally safe.
 
 ## Trie
 
 **Recognition**
 
-- Prefix search
-- Dictionary of words
-- Need prefix pruning or autocomplete behavior
+- Need prefix lookup, autocomplete, or prefix pruning.
+- Many strings share prefixes and repeated prefix checks are expensive.
 
 **Core Idea**
 
-Store characters along paths so shared prefixes reuse structure.
+Store characters along paths so shared prefixes are reused.
 
 **Python Template**
 
@@ -1099,192 +1028,128 @@ class Trie:
         return True
 ```
 
-**Common LeetCode Problems**
+**Typical Complexity**
 
-- Implement Trie
-- Word Search II
-- Design Add and Search Words Data Structure
-- Replace Words
+- Insert/Search/Prefix Check: `O(length of word)`
+- Space: `O(total characters stored)`
 
 **Common Mistakes**
 
-- Using trie when a hashmap is enough
-- Forgetting end-of-word marker
-- Building huge tries when constraints are small
+- Using a trie when a hashmap is enough.
+- Forgetting the end-of-word marker.
+- Building a trie when constraints are too small to justify it.
 
 **One-Line Memory Rule**
 
-Shared string prefixes at scale suggest a trie.
+Exact string lookup uses maps; shared prefix lookup suggests a trie.
 
 ## Design Problems
 
 **Recognition**
 
-- Need a reusable data structure or API
-- Operations have required time complexity
-- Object state matters more than one-shot computation
+- You must implement a class with required operation complexity.
+- The main challenge is picking the right underlying data structures.
 
 **Core Idea**
 
-Translate operations into the right underlying primitives: hashmap, doubly linked list, heap, deque, trie, or custom indexing.
+Translate each API call into primitives like array, hashmap, stack, heap, deque, linked list, or trie.
 
 **Python Template**
 
 ```python
-class MyQueue:
+import random
+
+class RandomizedSet:
     def __init__(self):
-        self.in_stack = []
-        self.out_stack = []
+        self.nums = []
+        self.pos = {}
 
-    def push(self, x: int) -> None:
-        self.in_stack.append(x)
+    def insert(self, val: int) -> bool:
+        if val in self.pos:
+            return False
+        self.pos[val] = len(self.nums)
+        self.nums.append(val)
+        return True
 
-    def _move(self):
-        if not self.out_stack:
-            while self.in_stack:
-                self.out_stack.append(self.in_stack.pop())
+    def remove(self, val: int) -> bool:
+        if val not in self.pos:
+            return False
 
-    def pop(self) -> int:
-        self._move()
-        return self.out_stack.pop()
+        idx = self.pos[val]
+        last = self.nums[-1]
+        self.nums[idx] = last
+        self.pos[last] = idx
 
-    def peek(self) -> int:
-        self._move()
-        return self.out_stack[-1]
+        self.nums.pop()
+        del self.pos[val]
+        return True
 
-    def empty(self) -> bool:
-        return not self.in_stack and not self.out_stack
+    def getRandom(self) -> int:
+        return random.choice(self.nums)
 ```
 
-**Common LeetCode Problems**
+**Typical Complexity**
 
-- LRU Cache
-- Min Stack
-- Implement Trie
-- Insert Delete GetRandom O(1)
-- Design Twitter
-- Time Based Key-Value Store
+- Insert/Remove/GetRandom: `O(1)` average
+- Space: `O(n)`
 
 **Common Mistakes**
 
-- Ignoring required complexity per operation
-- Choosing the right behavior but wrong internal structure
-- Forgetting stale data cleanup in lazy structures
+- Ignoring the required complexity for each operation.
+- Choosing the right behavior but the wrong underlying structure.
+- Forgetting to clean stale metadata after swaps or deletes.
 
 **One-Line Memory Rule**
 
-Design questions are mostly about matching APIs to the right primitives.
+Design problems are mostly data-structure matching problems.
 
 ## Mistake Log
 
 ### Sliding Window vs Prefix Sum
 
-- Use sliding window when the window can be adjusted locally and validity changes predictably
-- Use prefix sum when exact subarray totals matter, especially with negative numbers
-- Memory cue: window for local constraints, prefix sum for exact cumulative math
+- Use sliding window for local window validity you can maintain incrementally.
+- Use prefix sum for exact cumulative totals, especially when negatives exist.
+- Memory rule: window for validity, prefix for exact total.
 
 ### Stack vs Counter
 
-- Use stack when order and nesting matter
-- Use counter when only counts matter
-- Memory cue: parentheses need a stack, frequencies need a counter
+- Use stack when order or nesting matters.
+- Use counter when only frequencies matter.
+- Memory rule: nesting needs order, counts do not.
 
 ### BFS vs DFS for Shortest Path
 
-- BFS gives shortest path in unweighted graphs
-- DFS is for exploration, not shortest path by default
-- Memory cue: shortest steps in unweighted graph means BFS
+- BFS gives shortest path in an unweighted graph.
+- DFS explores deeply but does not guarantee shortest path.
+- Memory rule: shortest unweighted path means BFS.
 
 ### Binary Search vs Two Pointers
 
-- Use binary search on monotonic search spaces
-- Use two pointers when you can move boundaries directly based on current comparison
-- Memory cue: boundary search means binary search, paired scan means two pointers
+- Binary search needs a monotonic condition.
+- Two pointers needs a direct move rule based on the current pair/window.
+- Memory rule: boundary search vs moving scan.
 
 ### DP vs Greedy
 
-- Use DP when local best is not obviously safe and multiple states matter
-- Use greedy only when you can justify the local choice
-- Memory cue: if you need proof, challenge the greedy instinct first
+- Use DP when multiple futures must be compared.
+- Use greedy only when the local move is provably safe.
+- Memory rule: if the proof feels weak, it is probably not greedy.
 
 ### Heap vs QuickSelect
 
-- Use heap for repeated top-k maintenance or streaming data
-- Use quickselect for one kth query on static data
-- Memory cue: repeated best-item extraction means heap, one-shot kth means quickselect
+- Heap is better for repeated top-`k` maintenance or streaming data.
+- Quickselect is better for one static kth query.
+- Memory rule: repeated extraction means heap; one-shot selection means quickselect.
 
 ### Tree DFS Return Value vs Global Answer
 
-- Return values represent subtree information
-- Global or outer-scope variables represent answers not naturally returned by one subtree alone
-- Memory cue: ask whether the parent needs a value or the whole program needs an answer
-
-## Problem Index
-
-| Problem | Pattern |
-|---|---|
-| Two Sum | HashMap / Set |
-| Group Anagrams | HashMap / Set |
-| Longest Consecutive Sequence | HashMap / Set |
-| Two Sum II | Two Pointers |
-| 3Sum | Two Pointers |
-| Container With Most Water | Two Pointers |
-| Longest Substring Without Repeating Characters | Sliding Window |
-| Minimum Window Substring | Sliding Window |
-| Permutation in String | Sliding Window |
-| Subarray Sum Equals K | Prefix Sum + HashMap |
-| Contiguous Array | Prefix Sum + HashMap |
-| Path Sum III | Prefix Sum + HashMap |
-| Valid Parentheses | Stack |
-| Decode String | Stack |
-| Daily Temperatures | Monotonic Stack |
-| Largest Rectangle in Histogram | Monotonic Stack |
-| Search in Rotated Sorted Array | Binary Search |
-| Koko Eating Bananas | Binary Search |
-| Capacity To Ship Packages Within D Days | Binary Search |
-| Merge Intervals | Intervals |
-| Insert Interval | Intervals |
-| Meeting Rooms II | Intervals / Heap |
-| Top K Frequent Elements | Heap / QuickSelect |
-| Kth Largest Element in an Array | Heap / QuickSelect |
-| Merge K Sorted Lists | Heap |
-| Reverse Linked List | Linked List |
-| Remove Nth Node From End of List | Linked List |
-| Reorder List | Linked List |
-| Maximum Depth of Binary Tree | Tree DFS / BFS |
-| Binary Tree Level Order Traversal | Tree DFS / BFS |
-| Diameter of Binary Tree | Tree DFS / BFS |
-| Lowest Common Ancestor of a Binary Tree | Tree DFS |
-| Number of Islands | Graph / Grid DFS/BFS |
-| Rotting Oranges | Graph / Grid BFS |
-| Clone Graph | Graph / Grid DFS/BFS |
-| Course Schedule | Topological Sort |
-| Course Schedule II | Topological Sort |
-| Alien Dictionary | Topological Sort |
-| Network Delay Time | Dijkstra |
-| Path With Minimum Effort | Dijkstra |
-| Redundant Connection | Union Find |
-| Accounts Merge | Union Find |
-| Graph Valid Tree | Union Find |
-| Subsets | Backtracking |
-| Permutations | Backtracking |
-| Combination Sum | Backtracking |
-| House Robber | Dynamic Programming |
-| Coin Change | Dynamic Programming |
-| Longest Increasing Subsequence | Dynamic Programming |
-| Jump Game | Greedy |
-| Gas Station | Greedy |
-| Partition Labels | Greedy |
-| Implement Trie | Trie |
-| Word Search II | Trie + Backtracking |
-| LRU Cache | Design Problems |
-| Insert Delete GetRandom O(1) | Design Problems |
-| Time Based Key-Value Store | Design Problems |
+- Return subtree information upward.
+- Store the final cross-subtree answer separately when needed.
+- Memory rule: ask whether the parent needs a value or the whole problem needs an answer.
 
 ## Final Review Rules
 
-- Start by classifying the problem, not by recalling a specific problem number
-- Write the invariant before coding if the pattern is not obvious
-- Prefer simple templates you can explain out loud
-- If stuck, ask which data structure makes the operation cheap
-- If still stuck, reduce the problem to: search, count, merge, schedule, connect, or optimize
+- Classify the pattern before thinking about a problem number.
+- Write the invariant first if the pattern is not obvious.
+- If stuck, ask which operation must be cheap: lookup, merge, connect, order, or optimize.
+- If still stuck, default to `HashMap / Set` or sorting to expose structure.
