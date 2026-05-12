@@ -1,6 +1,12 @@
 # LeetCode Python Cheat Sheet
 
-This sheet is for pattern recognition, not memorizing problem numbers. The goal is to look at a problem, classify it fast, and drop in a clean Python template you can explain in an interview.
+This sheet is for pattern recognition, not memorizing problem numbers. For quant and AI interviews, that usually means getting very fast at arrays, strings, heaps, binary search, graph traversal, optimization, and stream-style thinking.
+
+The goal of each section is:
+
+- recognize the pattern fast
+- understand the invariant
+- reuse a Python template you can explain out loud
 
 ## Pattern Selection Flowchart
 
@@ -13,47 +19,95 @@ Read this top to bottom like a quick flowchart.
 | Tree | DFS, BFS | DFS for subtree/path logic, BFS for levels |
 | Graph or grid | DFS, BFS, Dijkstra, Topological Sort, Union Find | Traverse, shortest path, dependencies, or connectivity |
 | Linked list | Dummy Node, Fast/Slow Pointers, Reversal | Pointer wiring is the whole problem |
-| Recursion is banned | Stack | Simulate DFS or nested processing iteratively |
+| Recursion is banned | Stack | Simulate recursion iteratively |
 | Must solve in-place | Two Pointers, Swap-to-Index, Reverse Sections, Encode State In-Place | Reuse the array instead of extra memory |
 | Maximum / minimum over many choices | DP, Greedy, Sliding Window, Binary Search on Answer | Optimize over states, choices, or feasible answers |
 | Top / least K items | Heap, QuickSelect, Bucket Sort | Repeated best item vs one-shot kth |
 | Common string / prefix search | HashMap, Trie | Exact lookup vs prefix lookup |
 | Subarray / substring | Sliding Window, Prefix Sum + HashMap | Local valid window vs exact cumulative total |
-| Else | HashMap / Set, then Sorting | Fast lookup or reveal order |
+| Else | HashMap / Set, then Sorting | Fast lookup or expose order |
+
+## Quant / AI Focus
+
+If your goal is quant or AI-heavy interview prep, spend extra time on these first:
+
+**Tier 1: Highest value**
+
+- HashMap / Set
+- Sorting + Two Pointers
+- Sliding Window
+- Prefix Sum + HashMap
+- Binary Search
+- Heap / Priority Queue
+- Graph / Grid BFS/DFS
+- Topological Sort
+- Dynamic Programming
+- Greedy
+- Design Problems
+
+**Tier 2: Important**
+
+- Stack
+- Monotonic Stack
+- Dijkstra
+- Intervals
+- QuickSelect
+- Tree DFS / BFS
+
+**Tier 3: Usually lower frequency, but still interviewable**
+
+- Linked List
+- Union Find
+- Backtracking
+- Trie
+- In-Place Array Tricks
+
+Why this ordering:
+
+- Quant interviews often over-index on arrays, time series, ranking, optimization, and fast reasoning on numeric data.
+- AI / ML / infra interviews often over-index on search, top-k, graphs, pipelines, caching, retrieval, and stream-style processing.
+
+## Python Template Habits
+
+- Use short names with meaning: `left`, `right`, `ans`, `freq`, `q`, `heap`, `dist`, `parent`.
+- Put the invariant in a comment if the loop is subtle.
+- Update state in one place only if possible.
+- In interviews, simple and correct beats clever and compressed.
 
 ## Default Fallbacks
 
-- `HashMap / Set`: good when you want `O(1)` average lookup, counting, grouping, or deduplication.
-- `Sorting`: good when you want order, adjacency, intervals, or two pointers.
+- `HashMap / Set`: best first guess when you want `O(1)` average lookup, counting, grouping, or deduplication.
+- `Sorting`: best first guess when you want order, adjacency, intervals, binary search, or two pointers.
 - Interview note: sorting is a standard fallback, but Python `list.sort()` is not strictly `O(1)` extra space.
 
 ## HashMap / Set
 
 **Recognition**
 
-- Need fast lookup, counting, grouping, or deduplication.
-- Words like "seen", "frequency", "pair", "duplicate", or "same pattern" appear.
+- Need fast lookup, counting, deduplication, or grouping.
+- You keep asking "have I seen this before?"
+
+**Quant / AI Relevance**
+
+High. This shows up in feature counting, dictionary joins, deduplication, token counting, caching, and frequency-based ranking.
 
 **Core Idea**
 
-Trade memory for speed. Store what you need to ask repeatedly: "Have I seen this?", "How many times?", or "What shares this key?"
+Store the repeated lookup instead of recomputing it. Hash-based structures let you turn many nested-loop problems into one pass.
 
 **Python Template**
 
 ```python
-from collections import defaultdict
+def two_sum(nums, target):
+    seen = {}  # value -> index
 
-def solve(nums):
-    freq = defaultdict(int)
-    seen = set()
+    for i, x in enumerate(nums):
+        need = target - x
+        if need in seen:
+            return [seen[need], i]
+        seen[x] = i
 
-    for x in nums:
-        freq[x] += 1
-        if x in seen:
-            pass
-        seen.add(x)
-
-    return freq, seen
+    return []
 ```
 
 **Typical Complexity**
@@ -63,9 +117,9 @@ def solve(nums):
 
 **Common Mistakes**
 
+- Writing the current value before checking its complement.
 - Using a list for membership checks.
 - Counting when a set is enough.
-- Forgetting keys must be hashable.
 
 **One-Line Memory Rule**
 
@@ -75,12 +129,16 @@ If the same lookup happens again and again, store it in a `dict` or `set`.
 
 **Recognition**
 
-- Sorted array, palindrome, pair sum, partition, or in-place compaction.
-- You can move one boundary based on what the other boundary sees.
+- Sorted array, pair sum, palindrome, partition, or in-place compaction.
+- One pointer move can safely eliminate part of the search space.
+
+**Quant / AI Relevance**
+
+High. Common in sorted numeric arrays, deduping, merging signals, and memory-efficient scans.
 
 **Core Idea**
 
-Use two indices instead of nested loops. Each move should eliminate impossible answers.
+Two pointers replace nested loops when order lets you rule out candidates from one side at a time.
 
 **Python Template**
 
@@ -90,6 +148,7 @@ def two_sum_sorted(nums, target):
 
     while left < right:
         total = nums[left] + nums[right]
+
         if total == target:
             return [left, right]
         if total < target:
@@ -107,7 +166,7 @@ def two_sum_sorted(nums, target):
 
 **Common Mistakes**
 
-- Using it on unsorted data without first sorting or justifying order.
+- Using it on unsorted data without sorting or justifying order.
 - Moving both pointers when only one should move.
 - Forgetting duplicate skipping in problems like `3Sum`.
 
@@ -122,9 +181,13 @@ If order lets you discard one side at a time, use two pointers.
 - Subarray or substring with a local validity rule.
 - Need longest, shortest, or count of a valid contiguous range.
 
+**Quant / AI Relevance**
+
+High. Very common in rolling constraints, time-series windows, token windows, and stream-style processing.
+
 **Core Idea**
 
-Grow the right end, shrink the left end, and keep the window state updated incrementally.
+Keep a window `[left, right]` and update it incrementally. The key is to define what "valid" means and restore validity when it breaks.
 
 **Python Template**
 
@@ -132,20 +195,21 @@ Grow the right end, shrink the left end, and keep the window state updated incre
 from collections import defaultdict
 
 def length_of_longest_substring(s):
-    count = defaultdict(int)
+    freq = defaultdict(int)
     left = 0
-    best = 0
+    ans = 0
 
     for right, ch in enumerate(s):
-        count[ch] += 1
+        freq[ch] += 1  # include s[right]
 
-        while count[ch] > 1:
-            count[s[left]] -= 1
+        # shrink until the window is valid again
+        while freq[ch] > 1:
+            freq[s[left]] -= 1
             left += 1
 
-        best = max(best, right - left + 1)
+        ans = max(ans, right - left + 1)
 
-    return best
+    return ans
 ```
 
 **Typical Complexity**
@@ -156,8 +220,8 @@ def length_of_longest_substring(s):
 **Common Mistakes**
 
 - Using sliding window for exact-sum problems with negative numbers.
-- Updating the answer before the window is valid again.
-- Not writing down what "valid" means.
+- Updating the answer before the window becomes valid again.
+- Not writing down the window invariant.
 
 **One-Line Memory Rule**
 
@@ -170,9 +234,13 @@ Window problems are about maintaining validity, not recomputing it.
 - Exact subarray sum, count of subarrays, or range-total queries.
 - Negative numbers exist, so shrinking a window is not reliable.
 
+**Quant / AI Relevance**
+
+High. Useful for cumulative signals, running totals, profit-style deltas, and exact-range statistics.
+
 **Core Idea**
 
-Turn a subarray condition into a difference between two prefix sums, then count earlier prefixes with a map.
+Turn a subarray condition into a difference between two prefix sums. Then store earlier prefix sums in a hashmap.
 
 **Python Template**
 
@@ -180,15 +248,15 @@ Turn a subarray condition into a difference between two prefix sums, then count 
 from collections import defaultdict
 
 def subarray_sum(nums, k):
-    freq = defaultdict(int)
-    freq[0] = 1
+    count = defaultdict(int)
+    count[0] = 1  # empty prefix
     prefix = 0
     ans = 0
 
     for x in nums:
         prefix += x
-        ans += freq[prefix - k]
-        freq[prefix] += 1
+        ans += count[prefix - k]
+        count[prefix] += 1
 
     return ans
 ```
@@ -200,9 +268,9 @@ def subarray_sum(nums, k):
 
 **Common Mistakes**
 
-- Forgetting `freq[0] = 1`.
+- Forgetting `count[0] = 1`.
 - Using sliding window when negatives break monotonic behavior.
-- Mixing "exactly k" with "at most k".
+- Mixing exact totals with at-most constraints.
 
 **One-Line Memory Rule**
 
@@ -212,67 +280,78 @@ Exact subarray total usually becomes prefix difference plus hashmap.
 
 **Recognition**
 
-- Nested structure, matching pairs, undo-last, or iterative DFS.
-- Recursion is banned but the recursive idea still fits.
+- Nested structure, undo-last, iterative DFS, or recursion is banned.
+- The most recent unfinished work should be handled first.
+
+**Quant / AI Relevance**
+
+Medium. Less central than arrays or heaps, but useful for parsers, iterative graph/tree traversal, and expression handling.
 
 **Core Idea**
 
-Use LIFO order when the most recent unfinished work must be handled first.
+A stack is manual recursion. Push work when you discover it, pop work when you are ready to process it.
 
 **Python Template**
 
 ```python
-def is_valid_parentheses(s):
-    pairs = {')': '(', ']': '[', '}': '{'}
-    stack = []
+def dfs_iterative(graph, start):
+    stack = [start]
+    seen = {start}
+    order = []
 
-    for ch in s:
-        if ch in '([{':
-            stack.append(ch)
-        else:
-            if not stack or stack[-1] != pairs[ch]:
-                return False
-            stack.pop()
+    while stack:
+        node = stack.pop()
+        order.append(node)
 
-    return not stack
+        for nei in reversed(graph[node]):
+            if nei not in seen:
+                seen.add(nei)
+                stack.append(nei)
+
+    return order
 ```
 
 **Typical Complexity**
 
-- Time: `O(n)`
-- Space: `O(n)`
+- Time: `O(V + E)`
+- Space: `O(V)`
 
 **Common Mistakes**
 
-- Forgetting empty-stack checks.
+- Forgetting that iterative DFS still needs `seen`.
 - Using stack when a counter would be enough.
-- Not realizing iterative DFS is just "recursion with your own stack".
+- Not recognizing that recursive DFS can be translated almost line by line.
 
 **One-Line Memory Rule**
 
-If the last unfinished thing should be solved first, use a stack.
+If recursion is the idea but recursion is inconvenient, use a stack.
 
 ## Monotonic Stack
 
 **Recognition**
 
-- Next greater/smaller, previous greater/smaller, span, or histogram boundaries.
+- Next greater/smaller, previous greater/smaller, span, or histogram boundary.
 - You need the nearest item with a monotonic relationship.
+
+**Quant / AI Relevance**
+
+Medium. Useful for nearest-threshold logic and boundary-finding patterns, especially on ordered arrays.
 
 **Core Idea**
 
-Keep the stack increasing or decreasing so each element is pushed once and popped once.
+Maintain a stack that stays increasing or decreasing. When a new value breaks the rule, pop until the rule is restored.
 
 **Python Template**
 
 ```python
 def next_greater_elements(nums):
     res = [-1] * len(nums)
-    stack = []  # indices; values are decreasing on the stack
+    stack = []  # indices; values on stack are decreasing
 
     for i, x in enumerate(nums):
         while stack and nums[stack[-1]] < x:
-            res[stack.pop()] = x
+            j = stack.pop()
+            res[j] = x
         stack.append(i)
 
     return res
@@ -287,7 +366,7 @@ def next_greater_elements(nums):
 
 - Choosing the wrong monotonic direction.
 - Storing values when indices are needed.
-- Forgetting sentinel logic in histogram-style problems.
+- Forgetting to ask whether you need next/previous and greater/smaller.
 
 **One-Line Memory Rule**
 
@@ -300,20 +379,27 @@ Nearest greater or smaller usually means monotonic stack.
 - Sorted input, sorted answer space, or first/last valid boundary.
 - The condition is monotonic: once true, it stays true.
 
+**Quant / AI Relevance**
+
+High. Common in threshold search, parameter tuning, feasibility checks, and ranked numeric arrays.
+
 **Core Idea**
 
-Search the boundary where the answer changes from impossible to possible.
+Binary search is really boundary search. You are not searching values; you are searching where the answer changes.
 
 **Python Template**
 
 ```python
 def first_true(lo, hi, check):
+    # smallest x in [lo, hi] such that check(x) is True
     while lo < hi:
         mid = (lo + hi) // 2
+
         if check(mid):
             hi = mid
         else:
             lo = mid + 1
+
     return lo
 ```
 
@@ -326,7 +412,7 @@ def first_true(lo, hi, check):
 
 - No monotonic condition.
 - Infinite loops from wrong boundary updates.
-- Confusing "searching an index" with "searching an answer".
+- Confusing answer search with index search.
 
 **One-Line Memory Rule**
 
@@ -336,12 +422,16 @@ Binary search is about a monotonic boundary, not just sorted arrays.
 
 **Recognition**
 
-- Start/end ranges, overlap checks, scheduling, or merge decisions.
-- The order of endpoints is more important than the original order.
+- Start/end ranges, overlap checks, schedules, or merge decisions.
+- Endpoint order matters more than original input order.
+
+**Quant / AI Relevance**
+
+Medium. Relevant for scheduling, time ranges, booking windows, and event sweeps.
 
 **Core Idea**
 
-Sort first, then sweep once while merging or counting overlaps.
+Sort intervals first. Then sweep once while merging or counting overlaps.
 
 **Python Template**
 
@@ -368,7 +458,7 @@ def merge(intervals):
 
 - Forgetting to sort first.
 - Getting the overlap condition wrong for touching intervals.
-- Solving an interval problem with nested loops before trying sorting.
+- Using nested loops before trying sort + sweep.
 
 **One-Line Memory Rule**
 
@@ -379,35 +469,37 @@ Intervals usually mean sort, then sweep.
 **Recognition**
 
 - Need repeated access to the current smallest/largest item.
-- Need top `k`, least `k`, k-way merge, or best-first expansion.
+- Need top `k`, least `k`, best-first search, or streaming rank maintenance.
+
+**Quant / AI Relevance**
+
+High. Common in ranking, retrieval, scheduling, leaderboards, beam-search-like thinking, and streaming analytics.
 
 **Core Idea**
 
-A heap keeps the next best candidate cheap to insert and cheap to remove.
+Heaps are for repeated best-item access. If you keep asking "what is the top item right now?", a heap is usually right.
 
 **Python Template**
 
 ```python
 import heapq
 
-def top_k_frequent(nums, k):
-    freq = {}
-    for x in nums:
-        freq[x] = freq.get(x, 0) + 1
-
+def top_k_largest(nums, k):
     heap = []
-    for num, count in freq.items():
-        heapq.heappush(heap, (count, num))
-        if len(heap) > k:
-            heapq.heappop(heap)
 
-    return [num for count, num in heap]
+    for x in nums:
+        if len(heap) < k:
+            heapq.heappush(heap, x)
+        elif x > heap[0]:
+            heapq.heapreplace(heap, x)
+
+    return sorted(heap, reverse=True)
 ```
 
 **Typical Complexity**
 
-- Time: `O(n log k)` for top-`k`
-- Space: `O(n)` for counts, `O(k)` for the heap
+- Time: `O(n log k)`
+- Space: `O(k)`
 
 **Common Mistakes**
 
@@ -426,9 +518,13 @@ If you keep asking "what is the best item right now?", use a heap.
 - Need one kth smallest/largest answer from static data.
 - Full sorting feels wasteful.
 
+**Quant / AI Relevance**
+
+Medium. Good for one-shot rank selection, less useful than heaps for streaming or repeated top-k queries.
+
 **Core Idea**
 
-Partition like quicksort, but only recurse into the side containing the target index.
+Partition like quicksort, but recurse only into the side containing the target index.
 
 **Python Template**
 
@@ -473,7 +569,7 @@ def find_kth_largest(nums, k):
 **Common Mistakes**
 
 - Forgetting kth-largest vs kth-smallest index conversion.
-- Using it when you need stable ordering or repeated queries.
+- Using it when you need stable order or repeated queries.
 - Ignoring worst-case behavior in explanation.
 
 **One-Line Memory Rule**
@@ -487,9 +583,13 @@ One kth-element query often means quickselect, not heap.
 - Must use `O(1)` extra space on an array.
 - Values can be swapped to their "home" index or used to encode state.
 
+**Quant / AI Relevance**
+
+Lower, but still worth knowing because interviewers sometimes use it to test careful index reasoning.
+
 **Core Idea**
 
-Reuse the input array itself: place values where they belong, reverse sections, or encode extra information in signs or offsets.
+Reuse the input array itself. Put values where they belong, reverse sections, or encode metadata using signs or offsets.
 
 **Python Template**
 
@@ -499,6 +599,7 @@ def cyclic_sort(nums):
 
     while i < len(nums):
         j = nums[i] - 1
+
         if 1 <= nums[i] <= len(nums) and nums[i] != nums[j]:
             nums[i], nums[j] = nums[j], nums[i]
         else:
@@ -527,7 +628,11 @@ In-place array problems often mean "put each value where it belongs."
 **Recognition**
 
 - Pointer wiring is the hard part.
-- Head deletion, cycle detection, middle finding, or reversal appears.
+- Head deletion, cycle detection, middle finding, merge, or reversal appears.
+
+**Quant / AI Relevance**
+
+Lower than arrays and heaps for these roles, but still standard interview material.
 
 **Core Idea**
 
@@ -575,6 +680,10 @@ Most linked list bugs disappear if you save `next` and use a dummy head.
 
 - The input is a tree and each child subtree matters.
 - You need depth, path info, levels, or subtree-combined answers.
+
+**Quant / AI Relevance**
+
+Medium. Trees are less central than arrays for quant, but still common for traversal and recursive reasoning.
 
 **Core Idea**
 
@@ -637,65 +746,66 @@ DFS solves subtree logic; BFS solves level logic.
 **Recognition**
 
 - Need traversal, component counting, reachability, or unweighted shortest path.
-- The state is a cell, node, or coordinate with neighbors.
+- The state is a node, cell, coordinate, or string state with neighbors.
+
+**Quant / AI Relevance**
+
+High. Useful for search spaces, state machines, dependency graphs, pipeline reasoning, and shortest-step problems.
 
 **Core Idea**
 
-Model states as nodes and legal moves as edges. Use DFS for full exploration and BFS for shortest unweighted steps.
+Model states as nodes and legal moves as edges. Use DFS for exploration and BFS for shortest unweighted steps.
 
 **Python Template**
 
 ```python
-from collections import deque
+from collections import defaultdict, deque
 
-def num_islands(grid):
-    rows, cols = len(grid), len(grid[0])
-    visited = set()
+def bfs_distances(n, edges, start):
+    graph = defaultdict(list)
+    for u, v in edges:
+        graph[u].append(v)
+        graph[v].append(u)
 
-    def bfs(r, c):
-        q = deque([(r, c)])
-        visited.add((r, c))
+    dist = {start: 0}
+    q = deque([start])
 
-        while q:
-            x, y = q.popleft()
-            for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
-                nx, ny = x + dx, y + dy
-                if 0 <= nx < rows and 0 <= ny < cols:
-                    if grid[nx][ny] == '1' and (nx, ny) not in visited:
-                        visited.add((nx, ny))
-                        q.append((nx, ny))
+    while q:
+        node = q.popleft()
 
-    islands = 0
-    for r in range(rows):
-        for c in range(cols):
-            if grid[r][c] == '1' and (r, c) not in visited:
-                islands += 1
-                bfs(r, c)
+        for nei in graph[node]:
+            if nei not in dist:
+                dist[nei] = dist[node] + 1
+                q.append(nei)
 
-    return islands
+    return dist
 ```
 
 **Typical Complexity**
 
-- Time: `O(V + E)` or `O(rows * cols)` on a grid
-- Space: `O(V)` for visited plus queue/stack
+- Time: `O(V + E)`
+- Space: `O(V + E)`
 
 **Common Mistakes**
 
 - Marking visited too late and enqueueing duplicates.
-- Using DFS recursion when depth may overflow.
-- Forgetting disconnected components.
+- Using DFS when the question asks for shortest unweighted distance.
+- Forgetting the graph may be disconnected.
 
 **One-Line Memory Rule**
 
-Graph/grid problems start with nodes, neighbors, and visited.
+Graph problems start with nodes, neighbors, visited, and whether distance matters.
 
 ## Topological Sort
 
 **Recognition**
 
-- Directed dependencies: course order, build order, prerequisite order.
-- Need an ordering that respects edges.
+- Directed dependencies: course order, build order, prerequisite order, DAG pipeline order.
+- Need an ordering that respects edge direction.
+
+**Quant / AI Relevance**
+
+High. Very relevant for DAG workflows, data pipelines, model dependencies, and scheduling constraints.
 
 **Core Idea**
 
@@ -720,6 +830,7 @@ def topo_sort(num_nodes, edges):
     while q:
         node = q.popleft()
         order.append(node)
+
         for nei in graph[node]:
             indegree[nei] -= 1
             if indegree[nei] == 0:
@@ -749,6 +860,10 @@ Dependencies in a DAG usually mean indegree queue.
 
 - Weighted shortest path with non-negative edge costs.
 - You want the cheapest path, not just any path.
+
+**Quant / AI Relevance**
+
+Medium. Useful for weighted search spaces, routing, and cost-based traversal.
 
 **Core Idea**
 
@@ -805,6 +920,10 @@ Non-negative weighted shortest path means Dijkstra.
 - Repeated connectivity checks with merges.
 - Components change over time and you only care who is connected.
 
+**Quant / AI Relevance**
+
+Lower to medium. Useful for connectivity and clustering-style reasoning, but usually less frequent than heaps or binary search.
+
 **Core Idea**
 
 Store a representative for each component, compress paths during finds, and merge by rank or size.
@@ -845,7 +964,7 @@ def union(a, b):
 
 - Forgetting path compression.
 - Recomputing connectivity from scratch every time.
-- Using union find when you really need directed order instead of connectivity.
+- Using union find when you really need directed order, not connectivity.
 
 **One-Line Memory Rule**
 
@@ -857,6 +976,10 @@ Repeated merge-and-query connectivity suggests union find.
 
 - Need all subsets, permutations, combinations, or valid constructions.
 - The answer is built one choice at a time.
+
+**Quant / AI Relevance**
+
+Lower for most quant / AI interviews, but still good for search-space reasoning and pruning.
 
 **Core Idea**
 
@@ -906,9 +1029,13 @@ Backtracking is choose, recurse, unchoose.
 - Best answer over many choices with repeated subproblems.
 - A brute-force recursion would recompute the same state again and again.
 
+**Quant / AI Relevance**
+
+High. Important for optimization under constraints, sequence reasoning, and turning brute force into structured state transitions.
+
 **Core Idea**
 
-Define a state, define a transition, set the base case, then compute each state once.
+Define the state, the transition, and the base case. Then compute each state once.
 
 **Python Template**
 
@@ -933,8 +1060,8 @@ def coin_change(coins, amount):
 **Common Mistakes**
 
 - State definition is unclear.
-- Wrong iteration order when compressing to 1D.
 - Writing code before the recurrence is clear.
+- Wrong iteration order when compressing to 1D.
 
 **One-Line Memory Rule**
 
@@ -945,7 +1072,11 @@ DP is just cached recursion with a clean state definition.
 **Recognition**
 
 - A local choice looks safe and never needs to be undone.
-- You can argue "stays ahead" or "exchange" informally.
+- You can argue that one move always keeps you at least as good as alternatives.
+
+**Quant / AI Relevance**
+
+High. Very common in scheduling, resource allocation, interval selection, and one-pass optimization.
 
 **Core Idea**
 
@@ -986,6 +1117,10 @@ Greedy works only when the local best move is globally safe.
 
 - Need prefix lookup, autocomplete, or prefix pruning.
 - Many strings share prefixes and repeated prefix checks are expensive.
+
+**Quant / AI Relevance**
+
+Medium. More relevant for search, retrieval, autocomplete, and NLP-flavored prefix tasks than for typical quant problems.
 
 **Core Idea**
 
@@ -1048,56 +1183,46 @@ Exact string lookup uses maps; shared prefix lookup suggests a trie.
 **Recognition**
 
 - You must implement a class with required operation complexity.
-- The main challenge is picking the right underlying data structures.
+- The main challenge is choosing the right underlying data structures.
+
+**Quant / AI Relevance**
+
+High. This maps well to stream processing, temporal lookup, caches, serving layers, and data-system style questions.
 
 **Core Idea**
 
-Translate each API call into primitives like array, hashmap, stack, heap, deque, linked list, or trie.
+Map each API call to primitives like array, hashmap, stack, heap, deque, linked list, trie, or binary search.
 
 **Python Template**
 
 ```python
-import random
+from bisect import bisect_right
+from collections import defaultdict
 
-class RandomizedSet:
+class TimeMap:
     def __init__(self):
-        self.nums = []
-        self.pos = {}
+        self.store = defaultdict(list)  # key -> [(timestamp, value)]
 
-    def insert(self, val: int) -> bool:
-        if val in self.pos:
-            return False
-        self.pos[val] = len(self.nums)
-        self.nums.append(val)
-        return True
+    def set(self, key: str, value: str, timestamp: int) -> None:
+        self.store[key].append((timestamp, value))
 
-    def remove(self, val: int) -> bool:
-        if val not in self.pos:
-            return False
-
-        idx = self.pos[val]
-        last = self.nums[-1]
-        self.nums[idx] = last
-        self.pos[last] = idx
-
-        self.nums.pop()
-        del self.pos[val]
-        return True
-
-    def getRandom(self) -> int:
-        return random.choice(self.nums)
+    def get(self, key: str, timestamp: int) -> str:
+        arr = self.store[key]
+        i = bisect_right(arr, (timestamp, chr(127))) - 1
+        return arr[i][1] if i >= 0 else ""
 ```
 
 **Typical Complexity**
 
-- Insert/Remove/GetRandom: `O(1)` average
-- Space: `O(n)`
+- `set`: `O(1)` amortized
+- `get`: `O(log n)` per key
+- Space: `O(total entries)`
 
 **Common Mistakes**
 
-- Ignoring the required complexity for each operation.
-- Choosing the right behavior but the wrong underlying structure.
-- Forgetting to clean stale metadata after swaps or deletes.
+- Ignoring the required complexity of each operation.
+- Picking the right behavior with the wrong internal structure.
+- Forgetting that design problems are usually combinations of simpler patterns.
 
 **One-Line Memory Rule**
 
@@ -1126,7 +1251,7 @@ Design problems are mostly data-structure matching problems.
 ### Binary Search vs Two Pointers
 
 - Binary search needs a monotonic condition.
-- Two pointers needs a direct move rule based on the current pair/window.
+- Two pointers need a direct move rule based on the current pair or window.
 - Memory rule: boundary search vs moving scan.
 
 ### DP vs Greedy
@@ -1150,6 +1275,7 @@ Design problems are mostly data-structure matching problems.
 ## Final Review Rules
 
 - Classify the pattern before thinking about a problem number.
+- For quant / AI prep, over-practice arrays, heaps, binary search, graphs, DP, greedy, and design.
 - Write the invariant first if the pattern is not obvious.
-- If stuck, ask which operation must be cheap: lookup, merge, connect, order, or optimize.
+- If stuck, ask which operation must be cheap: lookup, merge, connect, order, rank, or optimize.
 - If still stuck, default to `HashMap / Set` or sorting to expose structure.
