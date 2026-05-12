@@ -3,5 +3,5 @@ A pattern-based Python cheat sheet for LeetCode interview preparation.
 
 ## Cheat Sheet
 
-- [LeetCode Python Cheat Sheet](./leetcode_python_cheatsheet.md)
-- [PDF Version](./leetcode_python_cheatsheet.pdf)
+- Full: [Markdown](./leetcode_python_cheatsheet.md) | [PDF](./leetcode_python_cheatsheet.pdf)
+- Quant Print: [Markdown](./leetcode_python_cheatsheet_quant_print.md) | [PDF](./leetcode_python_cheatsheet_quant_print.pdf)
